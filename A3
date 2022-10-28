@@ -1,20 +1,12 @@
 import itchat
 
 def get_list():
-    #Generate login QR code
-    #itchat.auto_login(enableCmdQR=True)
-
-    #Get the QR code picture, scan the code and log in to the WeChat web version.
-    itchat.auto_login()
-    #Get friend information list
+    itchat.auto_login(enableCmdQR=True)
     friendList = itchat.get_friends(update=True)
 
-    #Each logged-in WeChat account generates a friend information list.
     contactlist = []
     for i in friendList:
-        #Everyone in the friend list is represented by a dict.
         person = {}
-        #Add his/her feature variable to the friend's dict.
         person["City"] = i["City"]
         person["PYQuanPin"] = i["PYQuanPin"]
         person["Province"] = i["Province"]
@@ -22,53 +14,47 @@ def get_list():
         person["Sex"] = i["Sex"]
         person['Signature'] = i["Signature"]
         person['NickName'] = i["NickName"]
-        # Add this friend to the list.
         contactlist.append(person)
-    #Log out of WeChat account
     itchat.logout()
-    #Return the friend information list of the WeChat account.
     return contactlist
 
-#Get the friend information list of the first scanning code login WeChat account. Note that the first element of this list is the owner himself/herself contactlist[0] that will be used later
+
 contactlist = get_list()
-
-#Get the friend information list of the first scanning code login WeChat account. Note that the first element of this list is the owner himself/herself contactlist2[0] that will be used later
 contactlist2 = get_list()
-
-#Number of common friends
 count = 0
-
-#Common friends list
 common_list = []
-
-#As there may be friends with blank information except gender among WeChat friends, their identities cannot be verified according to them, so we should first define invalid identities to facilitate subsequent investigation.
-#Empty data identity without gender information
 empty = {"City":"","PYQuanPin":"","Province":"","PYInitial":"","Sex":0,'Signature':"",'NickName':""}
-#Empty data with gender as male
 emptyM = {"City":"","PYQuanPin":"","Province":"","PYInitial":"","Sex":1,'Signature':"",'NickName':""}
-#Empty data with gender as female
 emptyF = {"City":"","PYQuanPin":"","Province":"","PYInitial":"","Sex":2,'Signature':"",'NickName':""}
 
 for i in contactlist:
     if i in contactlist2:
-        #Exclude two WeChat account number owners and friends with invalid identity information from common friends.
-
         if i not in[contactlist[0],contactlist2[0],empty,emptyM,emptyF]:
-            #Add qualified mutual friends to the list.
             common_list.append(i)
-            #Calculation of the number of common friends
             count += 1
-
-#A list used to display information of mutual friends.
 display=[]
-
 for item in common_list:
-    #A statement used to describe the information of each mutual friend.
     profile = ""
-    #Priority is: nickname > user name spelling > user name abbreviation.
     if item["NickName"]:
         profile+=f"Nickname：{item['NickName']}"
     elif item["PYQuanPin"]:
-        profile+=f"User name spelling ：{item['PYQuanPin']}"
+        profile+=f"User name spelling：{item['PYQuanPin']}"
     elif item["PYInitial"]:
-        profile+=f"User name abbreviation ：{item['PYInitial’]}"
+        profile+=f"User name abbreviation：{item['PYIntial']}"
+    if item['Province'] or item['City']:
+        profile+=f",{item['Province']}{item['City']}"
+    if item['Sex']==1:
+        profile+=",male"
+    elif item['Sex']==2:
+        profile+=",female"
+    display.append(profile)
+
+with open("record.txt","w") as f:
+    print(f"You have{count}commen friends(If the information other than gender is empty, it is not recorded here)，which are：")
+    f.write(f"You have{count}commen friends，which are:\n")
+    for i in display:
+        print(i)
+        try:
+            f.write(i+"\n")
+        except:
+            f.write("This friend message contains characters that cannot be recognized, please check in the window\n")
